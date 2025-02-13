@@ -6,18 +6,27 @@ import { useMediaQuery } from 'react-responsive';
 import Navbar from './components/Navbar';
 import MobileNavbar from './components/MobileNavbar';
 
+
 // Impor Halaman
 import HomePage from './components/Home';
 import MobileHomePage from './components/MobileHomePage'; // Halaman khusus mobile
 import CategoryPage from './components/category';
 import About from './components/About';
 import CheckoutPage from './components/checkout';
-import AddProduct from './components/addproduct';
+import AddProduct from './components/UploadAdmin';
+import AdminProductPage from './components/AdminListProduct';
+import EditProduct from './components/EditProdukAdmin';
 import ProductDetail from './components/productdetail';
 import Wishlist from './components/wishlist'; 
 import Notification from './components/notification';// Import Wishlist
 import Profile from './components/profileuser';
+import RegisterPage from './components/registerpage';
+import LoginPage from './components/loginpage';
 import Lapormasalah from './components/laporkanmasalah';
+import AdminDashboard from "./components/AdminPage";
+import Profileuser from "./components/profileuser";
+import ProfilePage from './components/ProfilePage';
+import EditProfile from "./components/editprofile";
 
 // Komponen ResponsiveNavbar
 const ResponsiveNavbar = () => {
@@ -50,16 +59,22 @@ const App = () => {
           {/* Rute untuk halaman lainnya */}
           <Route path="/category" element={<CategoryPage />} />         
           <Route path="/about" element={<About />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/AddProduct" element={<AddProduct />} />
-          <Route path="/product-detail" element={<ProductDetail />} />
-          <Route path="/profileuser" element={<Profile />} />
+          <Route path="/addproduct" element={<AddProduct />} />
+          <Route path="/adminproduct" element={<AdminProductPage />} />
+          <Route path="/editproduct/:id" element={<EditProduct />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/profileuser" element={<ProfilePage />} />
+          <Route path="/product-detail/:productId" element={<ProductDetail />} />
           <Route path="/laporkanmasalah" element={<Lapormasalah />} />
-          
+          <Route path="/profile" element={<Profile />} />
           {/* Route untuk halaman Wishlist */}
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/notification" element={<Notification />} />
-
+          <Route path="/editprofile" element={<EditProfile />} /> {/* Tambahkan rute untuk EditProfile */}
+             
         </Routes>
       </Layout>
     </Router>

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,  } from "react-router-dom";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faShoppingCart, faBars, faTimes, faBell } from "@fortawesome/free-solid-svg-icons";
 
@@ -12,54 +14,45 @@ import pakuImage from "../assets/Paku.png";
 import kuasImage from "../assets/Kuas.png";
 import catImage from "../assets/cat.png";
 
-const CategoryPage = ({ cartItems, handleAddToCart }) => {
+const CategoryPage = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [liked, setLiked] = useState({});
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State untuk hamburger menu
   const [showCartContainer, setShowCartContainer] = useState(false); // State untuk cart container
   const [quantities, setQuantities] = useState({});
   const [selectedItems, setSelectedItems] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
 
-  // Data kategori dan produk
-  const products = {
-    Pertanian: [
-      { name: "Sekop", image: sekopImage, description: "Sekop berkualitas tinggi untuk keperluan pertanian.", price: "Rp. 100.000" },
-      { name: "Cangkul", image: cangkulImage, description: "Cangkul untuk menggali tanah dengan mudah.", price: "Rp. 120.000" },
-      { name: "Linggis", image: linggisImage, description: "Linggis untuk membongkar dan menghancurkan benda.", price: "Rp. 150.000" },
-    ],
-    Pertukangan: [
-      { name: "Palu", image: hammerImage, description: "Palu untuk memukul dengan kekuatan yang besar.", price: "Rp. 80.000" },
-      { name: "Paku", image: pakuImage, description: "Paku berkualitas untuk konstruksi dan pertukangan.", price: "Rp. 10.000" },
-      { name: "Kuas", image: kuasImage, description: "Kuas cat untuk hasil pengecatan yang maksimal.", price: "Rp. 25.000" },
-    ],
-    Pengecatan: [
-      { name: "Cat", image: catImage, description: "Cat berkualitas untuk berbagai keperluan.", price: "Rp. 50.000" },
-    ],
-  };
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const productsCollection = collection(db, "products");
+        const productSnapshot = await getDocs(productsCollection);
 
-  // Gabungkan semua produk ke dalam kategori "All Products"
-  const allProducts = [
-    ...Object.values(products).flat(),
-    { name: "Gembok Rumah", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735219968/Gembok_SAP_40mm_long_zdsvvd.png", price: "Rp. 10.000" },
-    { name: "Meteran", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735219970/Meteran_7.5m_Kofuku_ogcptf.png", price: "Rp. 20.000" },
-    { name: "Isolasi", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735219990/Isolasi_Nachi_il8kxz.png", price: "Rp. 30.000" },
-    { name: "Pisau Kumis Mini", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735219981/Pisau_Kumis_kecil_yvwuyl.png", price: "Rp. 40.000" },
-    { name: "Pisau Kumis Besar", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735219986/Pisau_kumis_Besar_qzlx8k.png", price: "Rp. 50.000" },
-    { name: "Arit", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735219990/Arit_GBK_r7adzr.png", price: "Rp. 60.000" },
-    { name: "Piting Lampu Plfn", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735219994/Piting_Lampu_plafon_ycbg1l.png", price: "Rp. 20.000" },
-    { name: "Rantai Pacific", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735219990/Rantai_116_Pacific_6.7_speed_w7xexb.png", price: "Rp. 80.000" },
-    { name: "Lem Auto Sealer", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735220004/Lem_auto_sealer_Dextone_35_gr_sn6i0f.png", price: "Rp. 20.000" },
-    { name: "Lem Pipa PVC", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735220009/Lem_pipa_PVC_Qplast_rwelrp.png", price: "Rp. 25.000" },
-    { name: "Mata Bor Kayu", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735220011/Mata_Bor_kayu_set_Bison_bd5llj.png", price: "Rp. 35.000" },
-    { name: "Kran Isco", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735220015/Kran_merk_Isco_twoway_zvlrhd.png", price: "Rp. 12.000" },
-    { name: "Lem Alteco", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735220027/Lem_Alteco_Korea_nautnb.png", price: "Rp. 9.000" },
-    { name: "Piringan Kompor", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735220028/piringan_Kompor_Gas_knbqaj.png", price: "Rp. 35.000" },
-    { name: "Knop Kompor", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735220028/Knop_Kompor_gas_cixpxd.png", price: "Rp. 14.000" },
-    { name: "Pompa Sepeda", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735220039/Pompa_sepeda_fjvagx.png", price: "Rp. 170.000" },
-    { name: "Kunci Pas", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735220040/Kunci_Pas_nesock.png", price: "Rp. 80.000" },
-    { name: "Tang", image: "https://res.cloudinary.com/ddl4sxrb3/image/upload/v1735220054/Tang_hml5cu.png", price: "Rp. 150.000" },
-  ];
+        const productsList = productSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        
+        const categoriesList = [
+          ...new Set(productsList.map((product) => product.category)),
+        ];
+
+        setProducts(productsList);
+        setCategories(categoriesList);
+      } catch (error) {
+        console.error("Error fetching products from Firestore:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+
 
   const [selectAll, setSelectAll] = useState(false);
 
@@ -138,6 +131,9 @@ const CategoryPage = ({ cartItems, handleAddToCart }) => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const filteredProducts = selectedCategory
+  ? products.filter((product) => product.category === selectedCategory)
+  : products;
   
   
 
@@ -321,78 +317,93 @@ const CategoryPage = ({ cartItems, handleAddToCart }) => {
         <div className="mt-8">
           <div
             className={`mb-3 cursor-pointer p-2 rounded-lg ${
-              selectedProduct === null ? "bg-[#955530ae] text-white" : "text-black"
+              selectedCategory === null ? "bg-[#955530ae] text-white" : "text-black"
             }`}
             onClick={() => {
-              setSelectedProduct(null);
+              setSelectedCategory(null)
               setIsMenuOpen(false); // Tutup menu setelah memilih kategori
             }}
           >
-            <p className="text-lg font-medium ml-2">• All Product</p>
+            <p className="text-lg font-medium ml-2">All Product</p>
           </div>
-          {Object.keys(products).map((category, index) => (
+          {categories.map((category, index) => (
             <div
               key={index}
               className={`mb-3 cursor-pointer p-2 rounded-lg ${
-                selectedProduct?.category === category ? "bg-[#955530ae] text-white" : "text-black"
+                selectedCategory === category ? "bg-[#955530ae] text-white" : "text-black"
               }`}
               onClick={() => {
-                setSelectedProduct({ category });
+                setSelectedCategory( category );
                 setIsMenuOpen(false); // Tutup menu setelah memilih kategori
               }}
             >
-              <p className="text-lg font-medium ml-2">• {category}</p>
+              <p className="text-lg font-medium ml-2"> {category}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Product List */}
-      <div className="flex-1 p-5 mt-14">
-        <div className="overflow-y-auto h-[calc(100vh-200px)]"> {/* Set fixed height for scrolling */}
-          <div className="boxes-wrapper grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {(selectedProduct ? products[selectedProduct.category] : allProducts).map((product, index) => (
-              <div
-                key={index}
-                className="relative w-full mb-6"
-                onClick={() => handleProductClick(index)}
-              >
-                <div className="absolute top-2 right-2 z-10">
-                  <FontAwesomeIcon
-                    icon={faHeart}
-                    className={`text-lg cursor-pointer ${liked[product.name] ? "text-red-500" : "text-gray-400"} like-button`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLikeClick(product.name);
-                    }}
-                  />
-                </div>
-                <div className="absolute top-2 left-2 z-10">
-                  <FontAwesomeIcon
-                    icon={faShoppingCart}
-                    className="text-lg cursor-pointer text-gray-400 hover:text-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAddToCart(index);
-                    }}
-                  />
-                </div>
+{/* Product List */}
+<div className="flex-1 p-5 mt-14">
+  <div className="overflow-y-auto h-[calc(100vh-200px)]">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {filteredProducts.map((product) => (
+        <div key={product.id} className="relative w-full">
+          
+          {/* Kotak Produk 1:1 (Keseluruhan Produk) */}
+          <div className="w-full aspect-square bg-[#955530ae] rounded-lg shadow-md flex flex-col items-center p-4 relative">
+            
+            {/* Ikon Favorite */}
+            <div className="absolute top-2 right-2 z-10">
+              <FontAwesomeIcon
+                icon={faHeart}
+                className={`text-lg cursor-pointer ${
+                  liked[product.id] ? "text-red-500" : "text-gray-400"
+                } like-button`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLikeClick(product.id);
+                }}
+              />
+            </div>
 
-                <div className="box-container-like bg-[#955530ae] rounded-lg p-4 shadow-md">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-[100px] h-[100px] md:w-[150px] md:h-[150px] object-contain mb-2 mx-auto"
-                  />
-                  <div className="text-left text-lg font-bold text-gray-800">{product.name}</div>
-                </div>
+            {/* Ikon Keranjang */}
+            <div className="absolute top-2 left-2 z-10">
+              <FontAwesomeIcon
+                icon={faShoppingCart}
+                className="text-lg cursor-pointer text-gray-400 hover:text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddToCart(product);
+                }}
+              />
+            </div>
 
-                <div className="text-left text-red-500 text-lg font-bold mt-2">{product.price}</div>
-              </div>
-            ))}
+            {/* Gambar Produk (Selalu 1:1) */}
+            <div className="w-full aspect-square bg-white rounded-md overflow-hidden flex justify-center items-center">
+              <img
+                src={product.uploadFoto}
+                alt={product.namaProduk}
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {/* Nama Produk */}
+            <div className="text-sm md:text-base font-bold text-gray-800 text-center mt-2">
+              {product.namaProduk}
+            </div>
+
+            {/* Harga Produk */}
+            <div className="text-red-500 text-sm md:text-lg font-bold mt-1">
+              Rp. {Number(product.harga || 0).toLocaleString("id-ID")}
+            </div>
           </div>
         </div>
-      </div>
+      ))}
+    </div>
+  </div>
+</div>
+
     </div>
   );
 };

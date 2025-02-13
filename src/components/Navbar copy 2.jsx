@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
@@ -60,6 +60,18 @@ const Navbar = ({ onSearch }) => {
         />
       </Link>
 
+      <input 
+  type="text" 
+  placeholder="Cari produk atau informasi..." 
+  className="w-[400px] h-[35px] rounded-[20px] border border-[#ccc] px-3"
+  value={searchQuery}
+  onChange={handleSearchChange}
+  onKeyPress={(event) => {
+    if (event.key === 'Enter') {
+      handleSearch(); // Panggil fungsi pencarian saat Enter ditekan
+    }
+  }}
+/>
 
       
 
@@ -76,10 +88,10 @@ const Navbar = ({ onSearch }) => {
           <img src={contactImage} alt="Contact" className="w-[30px] h-[30px] mt-3 object-contain" />
           <span className="text-[12px] text-white mb-2">About</span>
         </Link>
-        <button onClick={handleUserClick} className="flex flex-col items-center">
-          <img src={userImage} alt="Login" className="w-[30px] h-[30px] mt-3 object-contain" />
+        <Link className="flex flex-col items-center">
+          <img src={userImage} alt="Login" className="w-[30px] h-[30px] mt-3 object-contain" onClick={handleUserClick} />
           <span className="text-[12px] text-white mb-2">Login</span>
-        </button>
+        </Link>
 
       </nav>
       
