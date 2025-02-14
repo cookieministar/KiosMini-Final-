@@ -39,6 +39,26 @@ const HomePage = () => {
   const [quantities, setQuantities] = useState({});
   const [selectedItems, setSelectedItems] = useState([]);
 
+const fetchProducts = async () => {
+      try {
+        const productsCollection = collection(db, "products");
+        const productSnapshot = await getDocs(productsCollection);
+
+        const productsList = productSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        
+        const categoriesList = [
+          ...new Set(productsList.map((product) => product.category)),
+        ];
+
+        setProducts(productsList);
+        setCategories(categoriesList);
+      } catch (error) {
+        console.error("Error fetching products from Firestore:", error);
+      }
+    };
 
   const handleLikeClick = (index) => {
     const updatedLikes = [...liked];
@@ -68,32 +88,43 @@ const HomePage = () => {
   };
 
 
-    const handleProductClick = async (productId, category) => {
-    try {
-      // Ambil detail produk berdasarkan ID
-      const productRef = doc(db, "products", productId);
-      const productSnap = await getDoc(productRef);
-
-      if (!productSnap.exists()) {
-        console.error("Produk tidak ditemukan!");
-        return;
-      }
-
-      const product = { id: productId, ...productSnap.data() };
-
-      // Ambil produk serupa berdasarkan kategori
-      const q = query(collection(db, "products"), where("category", "==", category));
-      const querySnapshot = await getDocs(q);
-      const similarProducts = querySnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(item => item.id !== productId);
-
-      // Navigasi ke halaman detail dengan data yang diambil dari Firestore
-      navigate(`/product-detail/${productId}`, { state: { product, similarProducts } });
-    } catch (error) {
-      console.error("Error fetching product data:", error);
-    }
-  };
+        const handleProductClick = async (productId, category) => {
+        try {
+          // Ambil detail produk berdasarkan ID
+          const productRef = doc(db, "products", productId);
+          const productSnap = await getDoc(productRef);
+    
+          if (!productSnap.exists()) {
+            console.error("Produk tidak ditemukan!");
+            return;
+          }
+    
+          const product = { id: productId, ...productSnap.data() };
+    
+          // Ambil produk serupa berdasarkan kategori
+          const q = query(collection(db, "products"), where("category", "==", category));
+          const querySnapshot = await getDocs(q);
+          const similarProducts = querySnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(item => item.id !== productId);
+    
+          // Navigasi ke halaman detail dengan data yang diambil dari Firestore
+          navigate(`/product-detail/${productId}`, { state: { product, similarProducts } });
+        } catch (error) {
+          console.error("Error fetching product data:", error);
+        }
+      
+      
+        navigate("/product-detail", {
+          state: {
+            product: { ...product, price: cleanPrice }, // Oper harga yang sudah diubah ke angka
+            similarProducts: similarProducts.map((p) => ({
+              ...p,
+              price: parseInt(p.price.replace(/[Rp. ]/g, ""), 10),
+            })), // Bersihkan harga untuk produk serupa juga
+          },
+        });
+      };
 
 
   const handleHeartClick = (index) => {
@@ -219,35 +250,6 @@ const HomePage = () => {
                 icon={faShoppingCart}
                 className="text-black text-2xl mx-2 cursor-pointer relative"
                 onClick={() => setShowCartContainer(!showCartContainer)}
-              />
-            </div>
-
-            {/* Icon Heart */}
-            <div className="relative group p-2">
-              <div className="absolute inset-0 w-9 h-9 bg-[#933804bf] ml-3 translate-y-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <svg
-                className="w-[32px] h-[32px] mx-2 text-red-500 relative"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-                onClick={handleHeartClick} // Menambahkan event klik untuk navigasi
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                />
-              </svg>
-            </div>
-
-            {/* Icon Bell */}
-            <div className="relative group p-2">
-              <div className="absolute inset-0 w-9 h-9 bg-[#933804bf] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform group-hover:translate-x-2"></div>
-
-              <FontAwesomeIcon
-                icon={faBell}
-                className="text-black text-2xl mx-2 relative cursor-pointer"
-                onClick={() => navigate("/notification")} // Menambahkan onClick untuk navigasi
               />
             </div>
           </div>

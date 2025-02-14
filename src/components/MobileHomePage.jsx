@@ -183,7 +183,6 @@ const MobileHomePage = () => {
             className="w-10 h-10"
           />
           <div className="flex items-center space-x-3">
-            <img src={settingImage} alt="Settings" className="w-4 h-4 cursor-pointer" />
             <FontAwesomeIcon icon={faShoppingCart} className="text-black text-lg cursor-pointer" onClick={() => setShowCartContainer(!showCartContainer)} />
           </div>
         </div>

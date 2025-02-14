@@ -58,6 +58,8 @@ const AdminDashboard = () => {
     setModalImage(null);
   };
 
+
+
   const handleDeleteOrder = async (orderId) => {
     try {
       // Referensi dokumen yang akan dihapus
@@ -163,10 +165,13 @@ const AdminDashboard = () => {
       <img src={Add} alt="Tambah Produk" className="w-6 h-6 sm:w-8 sm:h-8" />
       <p className="text-xs sm:text-sm mt-2 text-center">Tambah Produk</p>
     </button>
-        <button className="bg-amber-700 text-white rounded-lg p-2 sm:p-4 flex flex-col items-center">
-          <img src={Address} alt="Daftar Pesanan" className="w-6 h-6 sm:w-8 sm:h-8" />
-          <p className="text-xs sm:text-sm mt-2 text-center">Arsip Pemesanan</p>
-        </button>
+    <button
+      className="bg-amber-700 text-white rounded-lg p-2 sm:p-4 flex flex-col items-center"
+      onClick={() => navigate("/arsippesanan")}
+    >
+      <img src={Address} alt="Daftar Pesanan" className="w-6 h-6 sm:w-8 sm:h-8" />
+      <p className="text-xs sm:text-sm mt-2 text-center">Arsip Pemesanan</p>
+    </button>
         <button
           className="bg-amber-700 text-white rounded-lg p-2 sm:p-4 flex flex-col items-center"
           onClick={handleLogout}

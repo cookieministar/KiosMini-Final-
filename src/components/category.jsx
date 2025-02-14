@@ -1,18 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate,  } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+
 import { db } from "../firebase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faShoppingCart, faBars, faTimes, faBell } from "@fortawesome/free-solid-svg-icons";
 
-// Gambar produk
-import sekopImage from "../assets/Sekop.png";
-import cangkulImage from "../assets/Cangkul.png";
-import linggisImage from "../assets/Linggis.png";
-import hammerImage from "../assets/Hammer.png";
-import pakuImage from "../assets/Paku.png";
-import kuasImage from "../assets/Kuas.png";
-import catImage from "../assets/cat.png";
 
 const CategoryPage = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -56,12 +49,32 @@ const CategoryPage = () => {
 
   const [selectAll, setSelectAll] = useState(false);
 
-  const handleProductClick = (product) => {
-    const cleanPrice = parseInt(product.price.replace(/[Rp. ]/g, ""), 10); // Hapus 'Rp.', spasi, dan titik, lalu ubah ke angka
+    const handleProductClick = async (productId, category) => {
+    try {
+      // Ambil detail produk berdasarkan ID
+      const productRef = doc(db, "products", productId);
+      const productSnap = await getDoc(productRef);
+
+      if (!productSnap.exists()) {
+        console.error("Produk tidak ditemukan!");
+        return;
+      }
+
+      const product = { id: productId, ...productSnap.data() };
+
+      // Ambil produk serupa berdasarkan kategori
+      const q = query(collection(db, "products"), where("category", "==", category));
+      const querySnapshot = await getDocs(q);
+      const similarProducts = querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(item => item.id !== productId);
+
+      // Navigasi ke halaman detail dengan data yang diambil dari Firestore
+      navigate(`/product-detail/${productId}`, { state: { product, similarProducts } });
+    } catch (error) {
+      console.error("Error fetching product data:", error);
+    }
   
-    const similarProducts = allProducts.filter(
-      (p) => p.name !== product.name && p.category === product.category
-    );
   
     navigate("/product-detail", {
       state: {
@@ -105,31 +118,74 @@ const CategoryPage = () => {
     }
   };
 
-  const onAddToCart = (product) => {
+  const handleAddToCart = (product) => {
+    if (!product || !product.id) {
+      console.error("Produk tidak valid");
+      return;
+    }
+  
+    // Format data item keranjang
     const newItem = {
-      name: product.name,
-      image: product.image,
-      price: parseInt(product.price.replace(/[^0-9]/g, "")), // Konversi harga ke angka
+      id: product.id,
+      name: product.namaProduk || "Produk Tanpa Nama",
+      image: product.uploadFoto || "",
+      price: product.harga ? Number(product.harga) : 0,
     };
   
-    // Periksa apakah item sudah ada di keranjang
-    const existingIndex = cartItems.findIndex(item => item.name === newItem.name);
-    
-    if (existingIndex >= 0) {
-      const newQuantities = { ...quantities };
-      newQuantities[existingIndex] = (newQuantities[existingIndex] || 1) + 1;
-      setQuantities(newQuantities);
-    } else {
-      handleAddToCart(newItem); // Gunakan prop fungsi dari parent
-      setQuantities(prev => ({ ...prev, [cartItems.length]: 1 }));
-    }
-    
-    setShowCartContainer(true);
+    setCartItems((prevItems) => {
+      // Cek apakah item sudah ada di keranjang
+      const existingItem = prevItems.find((item) => item.id === newItem.id);
+      
+      if (existingItem) {
+        // Jika sudah ada, tingkatkan jumlah
+        return prevItems.map((item) =>
+          item.id === newItem.id
+            ? { ...item, quantity: (item.quantity || 1) + 1 }
+            : item
+        );
+      } else {
+        // Jika baru, tambahkan ke keranjang
+        return [...prevItems, { ...newItem, quantity: 1 }];
+      }
+    });
+  
+    setShowCartContainer(true); // Tampilkan keranjang
+  };
+
+  // ✅ Memastikan harga valid
+  const getValidPrice = (price) => {
+    return !isNaN(price) && price > 0 ? price : 0;
   };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+    
   };
+
+   // ✅ Menangani navigasi dari halaman lain yang menambahkan produk ke keranjang
+    useEffect(() => {
+      if (location.state?.addToCart) {
+        const productToAdd = location.state.addToCart;
+    
+        console.log("Produk diterima di Home:", productToAdd);
+    
+        setCartItems((prevItems) => {
+          const itemExists = prevItems.find((item) => item.id === productToAdd.id);
+          if (itemExists) {
+            return prevItems.map((item) =>
+              item.id === productToAdd.id
+                ? { ...item, quantity: (item.quantity || 1) + 1 }
+                : item
+            );
+          } else {
+            return [...prevItems, { ...productToAdd, price: Number(productToAdd.price) }];
+          }
+        });
+    
+        setShowCartContainer(true);
+        navigate(".", { state: {}, replace: true });
+      }
+    }, [location.state]);
 
   const filteredProducts = selectedCategory
   ? products.filter((product) => product.category === selectedCategory)
@@ -158,84 +214,55 @@ const CategoryPage = () => {
               onClick={() => setShowCartContainer(!showCartContainer)}
             />
           </div>
-
-          {/* Icon Heart */}
-          <div className="relative group p-2">
-            <div className="absolute inset-0 w-9 h-9 bg-[#933804bf] ml-3 translate-y-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <svg
-              className="w-[32px] h-[32px] mx-2 text-red-500 relative"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-              onClick={() => navigate('/wishlist')}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-              />
-            </svg>
-          </div>
-
-          {/* Icon Bell */}
-          <div className="relative group p-2">
-            <div className="absolute inset-0 w-9 h-9 bg-[#933804bf] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform group-hover:translate-x-2"></div>
-            <FontAwesomeIcon
-              icon={faBell}
-              className="text-black text-2xl mx-2 relative"
-            />
-          </div>
         </div>
       </div>
 
       {showCartContainer && (
-  <div className="absolute top-30 right-0 bg-[#933804ed] left-25 w-[499px] h-[603px] p-4 shadow-md z-50 rounded-[19px] flex flex-col">
-    <div className="flex items-start justify-center mb-4">
-      <h2 className="text-2xl font-bold text-white">PEMESANAN</h2>
+  <div className="absolute top-40 right-4 left-4 md:left-20 md:w-[400px] md:h-[500px] w-[90%] h-auto p-3 bg-[#933804ed] shadow-md z-50 rounded-[15px] flex flex-col">
+    {/* Judul Keranjang */}
+    <div className="flex items-center justify-center mb-3">
+      <h2 className="text-xl font-bold text-white">PEMESANAN</h2>
     </div>
-    <div className="mt-4 flex-grow flex flex-col">
-      {cartItems && cartItems.length > 0 ? (
-        cartItems.map((item, index) => (
-          <div key={index} className="flex items-center mb-4">
+
+    {/* Daftar Produk dalam Keranjang */}
+    <div className="mt-3 flex-grow flex flex-col max-h-[350px] overflow-y-auto">
+      {cartItems.length > 0 ? (
+        cartItems.map((product) => (
+          <div key={product.id} className="flex items-center mb-3 flex-wrap">
+            {/* Checkbox untuk memilih produk */}
             <input
               type="checkbox"
               className="mr-2"
-              checked={selectedItems && selectedItems.includes(index)}
-              onChange={() => handleItemSelect(index)}
+              checked={selectedItems.includes(product.id)}
+              onChange={() => handleItemSelect(product.id)}
             />
-            <div className="bg-white rounded-[15px] p-3 flex items-center">
+
+            {/* Gambar Produk */}
+            <div className="bg-white rounded-[10px] p-2 flex items-center">
               <img
-                src={item.image}
-                alt={item.name}
-                className="w-[60px] h-[60px]"
+                src={product.image}
+                alt={product.name}
+                className="w-[40px] h-[40px] object-contain"
               />
             </div>
-            <div className="ml-3 flex flex-col justify-center">
-              <span className="text-white text-xl font-bold">
-                {item.name}
-              </span>
-              <div className="flex items-center mt-1">
-                <FontAwesomeIcon
-                  icon={faStar}
-                  className="text-gray-400 mr-1"
-                />
-                <span className="text-white">4.5</span>
-              </div>
-              <span className="text-red-500 text-lg font-bold mt-1">
-                Rp. {item.price}
+
+            {/* Nama dan Harga Produk */}
+            <div className="ml-2 flex flex-col">
+              <span className="text-white text-sm font-bold">{product.name}</span>
+              <span className="text-red-500 text-sm font-bold mt-1">
+                Rp. {product.price.toLocaleString("id-ID")}
               </span>
             </div>
-            <div className="ml-4 flex items-center">
+
+            {/* Tombol untuk Mengatur Kuantitas */}
+            <div className="ml-auto flex items-center">
               <button
-                className="bg-gray-300 text-black px-2 py-1 rounded-l hover:bg-gray-400 transition duration-200"
+                className="bg-gray-300 text-black px-1 py-1 rounded-l hover:bg-gray-400 transition duration-200"
                 onClick={() => {
-                  const newQuantities = { ...quantities };
-                  if (newQuantities[index] > 1) {
-                    newQuantities[index]--;
-                  } else {
-                    newQuantities[index] = 1;
-                  }
-                  setQuantities(newQuantities);
+                  setQuantities((prevQuantities) => ({
+                    ...prevQuantities,
+                    [product.id]: Math.max((prevQuantities[product.id] || 1) - 1, 1),
+                  }));
                 }}
               >
                 -
@@ -243,20 +270,23 @@ const CategoryPage = () => {
               <input
                 type="number"
                 min="1"
-                value={quantities && quantities[index] || 1}
-                className="w-[50px] text-center border border-gray-300 rounded mx-1"
+                value={quantities[product.id] || 1}
+                className="w-[35px] text-center border border-gray-300 rounded mx-1"
                 onChange={(e) => {
-                  const newQuantities = { ...quantities };
-                  newQuantities[index] = parseInt(e.target.value);
-                  setQuantities(newQuantities);
+                  const value = parseInt(e.target.value) || 1;
+                  setQuantities((prevQuantities) => ({
+                    ...prevQuantities,
+                    [product.id]: value,
+                  }));
                 }}
               />
               <button
-                className="bg-gray-300 text-black px-2 py-1 rounded-r hover:bg-gray-400 transition duration-200"
+                className="bg-gray-300 text-black px-1 py-1 rounded-r hover:bg-gray-400 transition duration-200"
                 onClick={() => {
-                  const newQuantities = { ...quantities };
-                  newQuantities[index] = (newQuantities[index] || 0) + 1;
-                  setQuantities(newQuantities);
+                  setQuantities((prevQuantities) => ({
+                    ...prevQuantities,
+                    [product.id]: (prevQuantities[product.id] || 1) + 1,
+                  }));
                 }}
               >
                 +
@@ -265,31 +295,25 @@ const CategoryPage = () => {
           </div>
         ))
       ) : (
-        <span className="text-white">
-          Tidak ada produk dalam pemesanan.
-        </span>
+        <span className="text-white text-center">Tidak ada produk dalam pemesanan.</span>
       )}
     </div>
-    <div className="flex items-center justify-between mt-4 bg-white rounded-[15px] p-3">
+
+    {/* Footer */}
+    <div className="flex items-center justify-between mt-3 bg-white rounded-[10px] p-2 flex-wrap">
       <div className="flex items-center">
-        <input
-          type="checkbox"
-          className="mr-2"
-          checked={selectAll || false}
-          onChange={handleSelectAll}
-        />
-        <span className="text-gray-800 font-bold">Semua</span>
+        <input type="checkbox" className="mr-2" checked={selectAll} onChange={handleSelectAll} />
+        <span className="text-gray-800 font-bold text-sm">Semua</span>
       </div>
-      <span className="text-red-500 font-bold">
-        Total: Rp.{" "}
-        {cartItems && cartItems.reduce(
-          (total, item, index) =>
-            total + item.price * (quantities[index] || 1),
-          0
-        )}
+      <span className="text-red-500 font-bold text-sm md:text-md">
+        Total: Rp. {" "}
+        {cartItems
+          .filter((item) => selectedItems.includes(item.id))
+          .reduce((total, item) => total + getValidPrice(item.price) * (quantities[item.id] || 1), 0)
+          .toLocaleString("id-ID")}
       </span>
       <button
-        className="bg-[#955530] text-white px-4 py-2 rounded-[15px] mt-4 hover:bg-[#7a4722] transition duration-300"
+        className="bg-[#955530] text-white px-3 py-2 rounded-[10px] mt-3 hover:bg-[#7a4722] transition duration-300 w-full md:w-auto text-sm"
         onClick={handleCheckout}
       >
         Booking Pembelian
@@ -385,6 +409,7 @@ const CategoryPage = () => {
                 src={product.uploadFoto}
                 alt={product.namaProduk}
                 className="w-full h-full object-contain"
+                onClick={() => handleProductClick(product.id, product.category)}
               />
             </div>
 

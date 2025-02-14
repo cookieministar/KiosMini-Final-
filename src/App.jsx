@@ -26,7 +26,10 @@ import Lapormasalah from './components/laporkanmasalah';
 import AdminDashboard from "./components/AdminPage";
 import Profileuser from "./components/profileuser";
 import ProfilePage from './components/ProfilePage';
-import EditProfile from "./components/editprofile";
+import EditProfileUser from "./components/editprofile";
+import AkunSetting from './components/akunsetting';
+import ArsipPesanan from './components/arsippesanan';
+
 
 // Komponen ResponsiveNavbar
 const ResponsiveNavbar = () => {
@@ -73,7 +76,10 @@ const App = () => {
           {/* Route untuk halaman Wishlist */}
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/notification" element={<Notification />} />
-          <Route path="/editprofile" element={<EditProfile />} /> {/* Tambahkan rute untuk EditProfile */}
+          <Route path="/arsippesanan" element={<ArsipPesanan />} />
+          <Route path="/editprofile/:userId" element={<EditProfileUser />} />
+          <Route path="/akunsetting" element={<AkunSetting />} /> {/* Tambahkan rute untuk EditProfile */}
+          {/* Tambahkan rute untuk EditProfile */}
              
         </Routes>
       </Layout>

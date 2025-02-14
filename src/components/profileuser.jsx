@@ -79,6 +79,17 @@ const Profile = () => {
       navigate("/laporkanmasalah"); // Sesuaikan dengan path yang benar
     };
 
+    const handleUpdate = async () => {
+      try {
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, userData);
+        setIsEditing(false);
+        alert("Profile updated successfully!");
+      } catch (error) {
+        console.error("Error updating profile:", error);
+      }
+    };
+
   const fetchProducts = async () => {
        try {
          const productsCollection = collection(db, "products");
@@ -146,7 +157,20 @@ const Profile = () => {
             <h2 className="text-2xl font-bold">{userData.name}</h2>
             <p className="text-gray-500 text-lg">@{userData.username}</p>
           </div>
-          <button className="mt-3 md:mt-0 md:ml-auto bg-green-600 text-white px-6 py-2 rounded-lg">Edit</button>
+          <button
+   onClick={() => {
+      const currentUser = auth.currentUser; 
+      if (!currentUser) {
+         console.error("User not logged in");
+         return;
+      }
+      navigate(`/editprofile/${currentUser.uid}`); // Gunakan currentUser.uid langsung
+   }}
+   className="mt-3 md:mt-0 md:ml-auto bg-green-600 text-white px-6 py-2 rounded-lg"
+>
+   Edit
+</button>
+
         </div>
         
         {/* Action Buttons */}

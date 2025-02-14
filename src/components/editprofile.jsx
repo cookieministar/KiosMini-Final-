@@ -1,144 +1,153 @@
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom"; // ✅ Gunakan useParams & useNavigate
+import { db } from "../firebase"; // Pastikan path sesuai dengan konfigurasi Firebase Anda
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+const EditProfileUser = () => {
+  const { userId } = useParams(); // ✅ Ambil userId dari URL
+  const navigate = useNavigate(); // ✅ Untuk navigasi setelah update
 
-const EditProfile = () => {
-  const navigate = useNavigate();
-
-  // State untuk menyimpan data profil
-  const [formData, setFormData] = useState({
-    name: "Tegar Adytia",
-    email: "tegaradytia@example.com",
-    phone: "0812345678933",
-    storeName: "Toko Tegar",
-    gender: "Laki-laki"
+  const [userData, setUserData] = useState({
+    name: "",
+    phone: "",
+    gender: "",
+    birthDate: "",
   });
 
-  // Fungsi untuk menangani perubahan input
+  // ✅ Ambil data user berdasarkan userId
+  useEffect(() => {
+    console.log("Fetching user data for userId:", userId); // Debugging
+    if (!userId) {
+       console.error("Error: userId is undefined or empty.");
+       navigate("/profile"); // Redirect ke profile jika userId tidak valid
+       return;
+    }
+ 
+    const fetchUserData = async () => {
+       try {
+          const userRef = doc(db, "users", userId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+             setUserData(userSnap.data());
+          } else {
+             console.error("User not found!");
+          }
+       } catch (error) {
+          console.error("Error fetching user data:", error);
+       }
+    };
+    fetchUserData();
+ }, [userId, navigate]);
+ 
+
+  // ✅ Handle perubahan input
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    setUserData({ ...userData, [e.target.name]: e.target.value });
   };
 
-  // Fungsi untuk menyimpan perubahan
-  const handleSave = () => {
-    alert("Profil berhasil diperbarui!");
-    navigate("/profileuser"); // Kembali ke halaman profil setelah menyimpan
+  // ✅ Handle update data ke Firestore
+  const handleUpdate = async () => {
+    if (!userId || !userData.name) {
+      alert("Mohon lengkapi data sebelum menyimpan.");
+      return;
+    }
+    try {
+      const userRef = doc(db, "users", userId);
+      await updateDoc(userRef, userData);
+      alert("Profile updated successfully!");
+      navigate("/profile"); // ✅ Arahkan kembali ke halaman profile
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg mt-10">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Edit Profil</h1>
+    <div className="min-h-screen flex flex-col bg-gray-100">
+      {/* Background Header */}
+      <div className="absolute top-0 left-0 w-full h-1/3 bg-[#E7D0BC]"></div>
 
-      {/* Username Section */}
-      <div className="mb-6">
-        <label className="block text-gray-600 mb-2">Username</label>
-        <div className="font-medium text-gray-800">tegaradytia</div>
-        <p className="text-sm text-gray-500 mt-1">
-          Username hanya dapat diubah satu (1) kali.
-        </p>
-      </div>
+      {/* Konten */}
+      <div className="flex-1 flex items-center justify-center relative p-6">
+        {/* Container Sidebar & Form */}
+        <div className="flex flex-col md:flex-row w-full max-w-4xl bg-white shadow-lg rounded-xl overflow-hidden">
+          {/* Sidebar */}
+          <div className="w-full md:w-1/4 bg-[#FAFAFA] p-6 border-r">
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-20 h-20 bg-gray-300 rounded-full mb-2"></div>
+              <p className="font-semibold text-lg text-gray-800">{userData.firstName} {userData.lastName}</p>
+            </div>
+            <div className="space-y-2">
+              <button className="w-full text-left p-3 bg-gray-200 rounded-lg font-semibold text-gray-900 hover:bg-gray-300 transition">
+                Personal Information
+              </button>
+            </div>
+          </div>
 
-      {/* Nama Section */}
-      <div className="mb-6">
-        <label className="block text-gray-600 mb-2">Nama</label>
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+          {/* Main Content */}
+          <div className="w-full md:flex-1 p-6 pb-24">
+            <h2 className="text-2xl font-semibold mb-6 text-center text-gray-800">
+              Personal Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                <input 
+                  type="text" 
+                  name="name"
+                  value={userData.name}
+                  onChange={handleChange}
+                  className="mt-1 border border-gray-300 p-3 rounded-lg w-full focus:ring focus:ring-gray-300" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input 
+                  type="tel" 
+                  name="phone"
+                  value={userData.phone}
+                  onChange={handleChange}
+                  className="mt-1 border border-gray-300 p-3 rounded-lg w-full focus:ring focus:ring-gray-300" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Gender</label>
+                <select 
+                  name="gender"
+                  value={userData.gender}
+                  onChange={handleChange}
+                  className="mt-1 border border-gray-300 p-3 rounded-lg w-full bg-white focus:ring focus:ring-gray-300"
+                >
+                  <option value="Pria">Pria</option>
+                  <option value="Wanita">Wanita</option>
+                </select>
+              </div>
 
-      {/* Email Section */}
-      <div className="mb-6">
-        <label className="block text-gray-600 mb-2">Email</label>
-        <div className="flex items-center justify-between">
-          <span className="text-gray-800">{formData.email}</span>
-          <button className="text-blue-600 hover:text-blue-800 font-medium px-3 py-1">
-            Ubah
-          </button>
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Date Of Birth</label>
+                <input 
+                  type="date" 
+                  name="birthDate"
+                  value={userData.birthDate}
+                  onChange={handleChange}
+                  className="mt-1 border border-gray-300 p-3 rounded-lg w-full focus:ring focus:ring-gray-300" 
+                />
+              </div>
+            </div>
+
+            {/* Tombol Save Changes */}
+            <button 
+              onClick={handleUpdate}
+              className="block w-full mt-6 bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition"
+            >
+              Save Changes
+            </button>
+          </div>
         </div>
-      </div>
-
-      {/* Nomor Telepon Section */}
-      <div className="mb-6">
-        <label className="block text-gray-600 mb-2">Nomor Telepon</label>
-        <div className="flex items-center justify-between">
-          <span className="text-gray-800">********33</span>
-          <button className="text-blue-600 hover:text-blue-800 font-medium px-3 py-1">
-            Ubah
-          </button>
-        </div>
-      </div>
-
-      {/* Nama Toko Section */}
-      <div className="mb-6">
-        <label className="block text-gray-600 mb-2">Nama Toko</label>
-        <input
-          type="text"
-          name="storeName"
-          value={formData.storeName}
-          onChange={handleChange}
-          className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
-      {/* Jenis Kelamin Section */}
-      <div className="mb-6">
-        <label className="block text-gray-600 mb-2">Jenis Kelamin</label>
-        <div className="flex gap-6">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="gender"
-              value="Laki-laki"
-              checked={formData.gender === "Laki-laki"}
-              onChange={handleChange}
-              className="w-4 h-4"
-            />
-            Laki-laki
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="gender"
-              value="Perempuan"
-              checked={formData.gender === "Perempuan"}
-              onChange={handleChange}
-              className="w-4 h-4"
-            />
-            Perempuan
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="gender"
-              value="Lainnya"
-              checked={formData.gender === "Lainnya"}
-              onChange={handleChange}
-              className="w-4 h-4"
-            />
-            Lainnya
-          </label>
-        </div>
-      </div>
-
-      {/* Tombol Simpan */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-        >
-          Simpan
-        </button>
       </div>
     </div>
   );
 };
 
-export default EditProfile;
+export default EditProfileUser;
