@@ -21,7 +21,7 @@ import Wishlist from './components/wishlist';
 import Notification from './components/notification';// Import Wishlist
 import Profile from './components/profileuser';
 import RegisterPage from './components/registerpage';
-import LoginPage from './components/loginpage';
+import LoginPage from './components/Loginpage';
 import Lapormasalah from './components/laporkanmasalah';
 import AdminDashboard from "./components/AdminPage";
 import Profileuser from "./components/profileuser";
