@@ -12,7 +12,7 @@ import HomePage from './components/Home';
 import MobileHomePage from './components/MobileHomePage'; // Halaman khusus mobile
 import CategoryPage from './components/category';
 import About from './components/About';
-import CheckoutPage from './components/checkout';
+import CheckoutPage from './components/Checkout';
 import AddProduct from './components/UploadAdmin';
 import AdminProductPage from './components/AdminListProduct';
 import EditProduct from './components/EditProdukAdmin';
